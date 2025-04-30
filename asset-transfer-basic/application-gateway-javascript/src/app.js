@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+//DO NOT MODIFY!!!!
 const grpc = require('@grpc/grpc-js');
 const { connect, hash, signers } = require('@hyperledger/fabric-gateway');
 const crypto = require('node:crypto');
@@ -67,10 +68,10 @@ const peerEndpoint = envOrDefault('PEER_ENDPOINT', 'localhost:7051');
 const peerHostAlias = envOrDefault('PEER_HOST_ALIAS', 'peer0.org1.example.com');
 
 const utf8Decoder = new TextDecoder();
-const assetId = `asset${String(Date.now())}`;
+const assetId = `asset${String(Date.now())}`;   //I GUESS THIS WON'T BE REQUIRED.
 
 async function main() {
-    displayInputParameters();
+    displayInputParameters();   //I GUESS THIS WON'T BE REQUIRED
 
     // The gRPC client connection should be shared by all Gateway connections to this endpoint.
     const client = await newGrpcConnection();
@@ -102,23 +103,29 @@ async function main() {
         // Get the smart contract from the network.
         const contract = network.getContract(chaincodeName);
 
+        //MAKE CHANGES HERE!!!!
+        // Initialize a set of asset data on the ledger using the chaincode 'InitLedger' function.
+        // await initLedger(contract);
+
+        // Return all the current assets on the ledger.
+        // await getAllAssets(contract);
+
+        // Create a new asset on the ledger.
+        // await createAsset(contract);
+
+        // Update an existing asset asynchronously.
+        // await transferAssetAsync(contract);
+
+        // Get the asset details by assetID.
+        // await readAssetByID(contract);
+
+        // Update an asset which does not exist.
+        // await updateNonExistentAsset(contract);
+
         // Initialize a set of asset data on the ledger using the chaincode 'InitLedger' function.
         await initLedger(contract);
 
-        // Return all the current assets on the ledger.
-        await getAllAssets(contract);
 
-        // Create a new asset on the ledger.
-        await createAsset(contract);
-
-        // Update an existing asset asynchronously.
-        await transferAssetAsync(contract);
-
-        // Get the asset details by assetID.
-        await readAssetByID(contract);
-
-        // Update an asset which does not exist.
-        await updateNonExistentAsset(contract);
     } finally {
         gateway.close();
         client.close();
@@ -130,6 +137,157 @@ main().catch((error) => {
     process.exitCode = 1;
 });
 
+
+
+async function initLedger(contract) {
+    await contract.submitTransaction('initLedger');
+}
+
+
+
+async function registerProvider(contract, companyName, contactEmail, contactPhone) {
+    console.log('\n--> Submit Transaction: registerProvider');
+
+    const commit = await contract.submitAsync('registerProvider', {
+        arguments: [companyName, contactEmail, contactPhone],
+    });
+
+    const resultJson = utf8Decoder.decode(commit.getResult());
+    console.log('*** Provider Registered:', JSON.parse(resultJson));
+
+    const status = await commit.getStatus();
+    if (!status.successful) {
+        throw new Error(`Transaction ${status.transactionId} failed: ${status.code}`);
+    }
+    console.log('*** Transaction committed successfully');
+}
+
+
+
+async function updateProvider(contract, companyName, contactEmail, contactPhone) {
+    console.log('\n--> Submit Transaction: updateProvider');
+
+    const commit = await contract.submitAsync('updateProvider', {
+        arguments: [companyName, contactEmail, contactPhone],
+    });
+
+    const resultJson = utf8Decoder.decode(commit.getResult());
+    console.log('*** Provider Updated:', JSON.parse(resultJson));
+
+    const status = await commit.getStatus();
+    if (!status.successful) {
+        throw new Error(`Transaction ${status.transactionId} failed: ${status.code}`);
+    }
+    console.log('*** Transaction committed successfully');
+}
+
+
+
+async function deleteProvider(contract) {
+    console.log('\n--> Submit Transaction: deleteProvider');
+
+    const commit = await contract.submitAsync('deleteProvider');
+    const result = utf8Decoder.decode(commit.getResult());
+    console.log('*** Provider Deleted:', result);
+
+    const status = await commit.getStatus();
+    if (!status.successful) {
+        throw new Error(`Transaction ${status.transactionId} failed: ${status.code}`);
+    }
+    console.log('*** Transaction committed successfully');
+}
+
+
+
+async function addModeOfTransport(contract, mode) {
+    console.log('\n--> Submit Transaction: addModeOfTransport');
+
+    const commit = await contract.submitAsync('addModeOfTransport', {
+        arguments: [mode],
+    });
+
+    const resultJson = utf8Decoder.decode(commit.getResult());
+    console.log('*** Updated Modes of Transport:', JSON.parse(resultJson));
+
+    const status = await commit.getStatus();
+    if (!status.successful) {
+        throw new Error(`Transaction ${status.transactionId} failed: ${status.code}`);
+    }
+    console.log('*** Transaction committed successfully');
+}
+
+
+
+async function removeModeOfTransport(contract, mode) {
+    console.log('\n--> Submit Transaction: removeModeOfTransport');
+
+    const commit = await contract.submitAsync('removeModeOfTransport', {
+        arguments: [mode],
+    });
+
+    const resultJson = utf8Decoder.decode(commit.getResult());
+    console.log('*** Updated Modes after Removal:', JSON.parse(resultJson));
+
+    const status = await commit.getStatus();
+    if (!status.successful) {
+        throw new Error(`Transaction ${status.transactionId} failed: ${status.code}`);
+    }
+    console.log('*** Transaction committed successfully');
+}
+
+
+
+async function addTransportOption(contract, mode, source, destination, departure, arrival, price, seats) {
+    console.log('\n--> Submit Transaction: addTransportOption');
+
+    const commit = await contract.submitAsync('addTransportOption', {
+        arguments: [mode, source, destination, departure, arrival, price.toString(), seats.toString()],
+    });
+
+    const resultJson = utf8Decoder.decode(commit.getResult());
+    console.log('*** Transport Option Added:', JSON.parse(resultJson));
+
+    const status = await commit.getStatus();
+    if (!status.successful) {
+        throw new Error(`Transaction ${status.transactionId} failed: ${status.code}`);
+    }
+    console.log('*** Transaction committed successfully');
+}
+
+
+
+async function removeTransportOption(contract, transportId) {
+    console.log('\n--> Submit Transaction: removeTransportOption');
+
+    const commit = await contract.submitAsync('removeTransportOption', {
+        arguments: [transportId],
+    });
+
+    const result = utf8Decoder.decode(commit.getResult());
+    console.log('*** Transport Option Removed:', result);
+
+    const status = await commit.getStatus();
+    if (!status.successful) {
+        throw new Error(`Transaction ${status.transactionId} failed: ${status.code}`);
+    }
+    console.log('*** Transaction committed successfully');
+}
+
+
+
+async function queryProviderTransportOptions(contract, source, destination) {
+    console.log('\n--> Evaluate Transaction: queryProviderTransportOptions');
+
+    const resultBytes = await contract.evaluateTransaction('queryProviderTransportOptions', source, destination);
+    const resultJson = utf8Decoder.decode(resultBytes);
+    const result = JSON.parse(resultJson);
+
+    console.log('*** Provider Transport Options:', result);
+}
+
+
+
+//DO NOT MODIFY!!!!
 async function newGrpcConnection() {
     const tlsRootCert = await fs.readFile(tlsCertPath);
     const tlsCredentials = grpc.credentials.createSsl(tlsRootCert);
@@ -138,12 +296,14 @@ async function newGrpcConnection() {
     });
 }
 
+//DO NOT MODIFY!!!!
 async function newIdentity() {
     const certPath = await getFirstDirFileName(certDirectoryPath);
     const credentials = await fs.readFile(certPath);
     return { mspId, credentials };
 }
 
+//DO NOT MODIFY!!!!
 async function getFirstDirFileName(dirPath) {
     const files = await fs.readdir(dirPath);
     const file = files[0];
@@ -153,6 +313,7 @@ async function getFirstDirFileName(dirPath) {
     return path.join(dirPath, file);
 }
 
+//DO NOT MODIFY!!!!
 async function newSigner() {
     const keyPath = await getFirstDirFileName(keyDirectoryPath);
     const privateKeyPem = await fs.readFile(keyPath);
@@ -164,15 +325,7 @@ async function newSigner() {
  * This type of transaction would typically only be run once by an application the first time it was started after its
  * initial deployment. A new version of the chaincode deployed later would likely not need to run an "init" function.
  */
-async function initLedger(contract) {
-    console.log(
-        '\n--> Submit Transaction: InitLedger, function creates the initial set of assets on the ledger'
-    );
 
-    await contract.submitTransaction('InitLedger');
-
-    console.log('*** Transaction committed successfully');
-}
 
 /**
  * Evaluate a transaction to query ledger state.
@@ -266,7 +419,7 @@ async function updateNonExistentAsset(contract) {
     try {
         await contract.submitTransaction(
             'UpdateAsset',
-            'asset70',
+            'asset5',
             'blue',
             '5',
             'Tomoko',
