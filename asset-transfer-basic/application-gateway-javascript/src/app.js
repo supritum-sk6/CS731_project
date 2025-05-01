@@ -70,6 +70,8 @@ const peerHostAlias = envOrDefault('PEER_HOST_ALIAS', 'peer0.org1.example.com');
 const utf8Decoder = new TextDecoder();
 const assetId = `asset${String(Date.now())}`;   //I GUESS THIS WON'T BE REQUIRED.
 
+var contract;
+
 async function main() {
     displayInputParameters();   //I GUESS THIS WON'T BE REQUIRED
 
@@ -96,46 +98,96 @@ async function main() {
         },
     });
 
-    try {
+    // try {
         // Get a network instance representing the channel where the smart contract is deployed.
         const network = gateway.getNetwork(channelName);
 
         // Get the smart contract from the network.
-        const contract = network.getContract(chaincodeName);
+        contract = network.getContract(chaincodeName);
 
-        //MAKE CHANGES HERE!!!!
-        // Initialize a set of asset data on the ledger using the chaincode 'InitLedger' function.
+        // //MAKE CHANGES HERE!!!!
+        // // Initialize a set of asset data on the ledger using the chaincode 'InitLedger' function.
         // await initLedger(contract);
 
-        // Return all the current assets on the ledger.
-        // await getAllAssets(contract);
+        // await registerProvider(contract, 'Redbus Pvt Ltd', 'support@redbus.in', '9876543210');
+        // await registerProvider(contract, 'Arkids', 'support@arkids.in', '9876543210');
 
-        // Create a new asset on the ledger.
-        // await createAsset(contract);
+        // await updateProvider(contract, 'Redbus Limited', 'help@redbus.in', '9998887776');
 
-        // Update an existing asset asynchronously.
-        // await transferAssetAsync(contract);
+        // // await deleteProvider(contract);
 
-        // Get the asset details by assetID.
-        // await readAssetByID(contract);
+        // await addModeOfTransport(contract, 'Bus');
 
-        // Update an asset which does not exist.
-        // await updateNonExistentAsset(contract);
+        // await removeModeOfTransport(contract, 'Train');
 
-        // Initialize a set of asset data on the ledger using the chaincode 'InitLedger' function.
-        await initLedger(contract);
+        // await addTransportOption(
+        //     contract,
+        //     'Bus',
+        //     'Delhi',
+        //     'Kanpur',
+        //     '2025-05-02T10:00:00Z',
+        //     '2025-05-02T18:00:00Z',
+        //     '1200',
+        //     '40'
+        // );
+
+        // await removeTransportOption(contract, 'TRANS_1714551590041_a83b22');
+
+        // await queryProviderTransportOptions(contract, 'Delhi', 'Kanpur');
 
 
-    } finally {
-        gateway.close();
-        client.close();
-    }
+
+    // } finally {
+    //     gateway.close();
+    //     client.close();
+    // }
 }
 
 main().catch((error) => {
     console.error('******** FAILED to run the application:', error);
     process.exitCode = 1;
 });
+
+
+
+// === ROUTE FUNCTIONS ===
+
+async function initLedger_route() {
+    return await initLedger(contract);
+}
+
+async function registerProvider_route(companyName, contactEmail, contactPhone) {
+    return await registerProvider(contract, companyName, contactEmail, contactPhone);
+}
+
+async function updateProvider_route(companyName, contactEmail, contactPhone) {
+    return await updateProvider(contract, companyName, contactEmail, contactPhone);
+}
+
+async function deleteProvider_route() {
+    return await deleteProvider(contract);
+}
+
+async function addModeOfTransport_route(mode) {
+    return await addModeOfTransport(contract, mode);
+}
+
+async function removeModeOfTransport_route(mode) {
+    return await removeModeOfTransport(contract, mode);
+}
+
+async function addTransportOption_route(mode, source, destination, departure, arrival, price, seats) {
+    return await addTransportOption(contract, mode, source, destination, departure, arrival, price, seats);
+}
+
+async function removeTransportOption_route(transportId) {
+    return await removeTransportOption(contract, transportId);
+}
+
+async function queryProviderTransportOptions_route(source, destination) {
+    return await queryProviderTransportOptions(contract, source, destination);
+}
+
 
 
 
@@ -238,10 +290,14 @@ async function removeModeOfTransport(contract, mode) {
 
 
 async function addTransportOption(contract, mode, source, destination, departure, arrival, price, seats) {
+    const timestamp = new Date().getTime();
+    const randomString = crypto.randomBytes(3).toString('hex');
+    transportId = `TRANS_${timestamp}_${randomString}`;
+
     console.log('\n--> Submit Transaction: addTransportOption');
 
     const commit = await contract.submitAsync('addTransportOption', {
-        arguments: [mode, source, destination, departure, arrival, price.toString(), seats.toString()],
+        arguments: [transportId, mode, source, destination, departure, arrival, price.toString(), seats.toString()],
     });
 
     const resultJson = utf8Decoder.decode(commit.getResult());
@@ -282,7 +338,12 @@ async function queryProviderTransportOptions(contract, source, destination) {
     const resultJson = utf8Decoder.decode(resultBytes);
     const result = JSON.parse(resultJson);
 
-    console.log('*** Provider Transport Options:', result);
+    // console.log('*** Provider Transport Options:', result);
+    if (Array.isArray(result) && result.length === 0) {
+        console.log('*** No transport options available for the given source and destination.');
+    } else {
+        console.log('*** Provider Transport Options:', result);
+    }
 }
 
 
@@ -321,115 +382,7 @@ async function newSigner() {
     return signers.newPrivateKeySigner(privateKey);
 }
 
-/**
- * This type of transaction would typically only be run once by an application the first time it was started after its
- * initial deployment. A new version of the chaincode deployed later would likely not need to run an "init" function.
- */
 
-
-/**
- * Evaluate a transaction to query ledger state.
- */
-async function getAllAssets(contract) {
-    console.log(
-        '\n--> Evaluate Transaction: GetAllAssets, function returns all the current assets on the ledger'
-    );
-
-    const resultBytes = await contract.evaluateTransaction('GetAllAssets');
-
-    const resultJson = utf8Decoder.decode(resultBytes);
-    const result = JSON.parse(resultJson);
-    console.log('*** Result:', result);
-}
-
-/**
- * Submit a transaction synchronously, blocking until it has been committed to the ledger.
- */
-async function createAsset(contract) {
-    console.log(
-        '\n--> Submit Transaction: CreateAsset, creates new asset with ID, Color, Size, Owner and AppraisedValue arguments'
-    );
-
-    await contract.submitTransaction(
-        'CreateAsset',
-        assetId,
-        'yellow',
-        '5',
-        'Tom',
-        '1300'
-    );
-
-    console.log('*** Transaction committed successfully');
-}
-
-/**
- * Submit transaction asynchronously, allowing the application to process the smart contract response (e.g. update a UI)
- * while waiting for the commit notification.
- */
-async function transferAssetAsync(contract) {
-    console.log(
-        '\n--> Async Submit Transaction: TransferAsset, updates existing asset owner'
-    );
-
-    const commit = await contract.submitAsync('TransferAsset', {
-        arguments: [assetId, 'Saptha'],
-    });
-    const oldOwner = utf8Decoder.decode(commit.getResult());
-
-    console.log(
-        `*** Successfully submitted transaction to transfer ownership from ${oldOwner} to Saptha`
-    );
-    console.log('*** Waiting for transaction commit');
-
-    const status = await commit.getStatus();
-    if (!status.successful) {
-        throw new Error(
-            `Transaction ${
-                status.transactionId
-            } failed to commit with status code ${String(status.code)}`
-        );
-    }
-
-    console.log('*** Transaction committed successfully');
-}
-
-async function readAssetByID(contract) {
-    console.log(
-        '\n--> Evaluate Transaction: ReadAsset, function returns asset attributes'
-    );
-
-    const resultBytes = await contract.evaluateTransaction(
-        'ReadAsset',
-        assetId
-    );
-
-    const resultJson = utf8Decoder.decode(resultBytes);
-    const result = JSON.parse(resultJson);
-    console.log('*** Result:', result);
-}
-
-/**
- * submitTransaction() will throw an error containing details of any error responses from the smart contract.
- */
-async function updateNonExistentAsset(contract) {
-    console.log(
-        '\n--> Submit Transaction: UpdateAsset asset70, asset70 does not exist and should return an error'
-    );
-
-    try {
-        await contract.submitTransaction(
-            'UpdateAsset',
-            'asset5',
-            'blue',
-            '5',
-            'Tomoko',
-            '300'
-        );
-        console.log('******** FAILED to return an error');
-    } catch (error) {
-        console.log('*** Successfully caught the error: \n', error);
-    }
-}
 
 /**
  * envOrDefault() will return the value of an environment variable, or a default value if the variable is undefined.
@@ -452,3 +405,17 @@ function displayInputParameters() {
     console.log(`peerEndpoint:      ${peerEndpoint}`);
     console.log(`peerHostAlias:     ${peerHostAlias}`);
 }
+
+
+
+module.exports = {
+    initLedger_route,
+    registerProvider_route,
+    updateProvider_route,
+    deleteProvider_route,
+    addModeOfTransport_route,
+    removeModeOfTransport_route,
+    addTransportOption_route,
+    removeTransportOption_route,
+    queryProviderTransportOptions_route
+};

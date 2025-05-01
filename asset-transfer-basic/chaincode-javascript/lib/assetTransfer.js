@@ -146,11 +146,10 @@ class TicketBookingContract extends Contract {
     }
 
     //7
-    async addTransportOption(ctx, mode, source, destination, departure, arrival, price, seats) {
+    async addTransportOption(ctx, transportId, mode, source, destination, departure, arrival, price, seats) {
         this._checkOrg(ctx, 'Org1MSP');
 
         const providerId = this._getInvokerId(ctx);
-        const transportId = await this._generateTransportId(ctx);
         const dynamicFactor = this._calculateDynamicPriceFactor(seats);
 
         const transport = {
@@ -170,12 +169,6 @@ class TicketBookingContract extends Contract {
         const transportKey = `TRANSPORT_${transportId}`;
         await ctx.stub.putState(transportKey, Buffer.from(JSON.stringify(transport)));
         return JSON.stringify(transport);
-    }
-    //This needs to change. Generate random tansport_id in he backend.
-    async _generateTransportId(ctx) {
-        const timestamp = new Date().getTime();
-        const randomString = crypto.randomBytes(3).toString('hex');
-        return `TRANS_${timestamp}_${randomString}`;
     }
     _calculateDynamicPriceFactor(seats) {
         const baseFactor = 1.0;
