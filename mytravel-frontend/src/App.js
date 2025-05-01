@@ -6,6 +6,8 @@ import HomeSelector from './pages/HomeSelector';
 import ProviderLogin from './pages/ProviderLogin';
 import ProviderRegister from './pages/ProviderRegister';
 import ProviderHome from './pages/ProviderHome';
+import ProviderResults from './pages/ProviderResults';
+
 import UserLogin from './pages/UserLogin';
 import UserRegister from './pages/UserRegister';
 import UserHome from './pages/UserHome';
@@ -18,6 +20,7 @@ const App = () => {
         <Route path="/provider/login" element={<ProviderLogin />} />
         <Route path="/provider/register" element={<ProviderRegister />} />
         <Route path="/provider/home" element={<ProviderHome />} />
+        <Route path="/provider/results" element={<ProviderResults />} />
         <Route path="/user/login" element={<UserLogin />} />
         <Route path="/user/register" element={<UserRegister />} />
         <Route path="/user/home" element={<UserHome />} />

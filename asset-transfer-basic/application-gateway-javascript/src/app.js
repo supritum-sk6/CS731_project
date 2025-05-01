@@ -293,6 +293,7 @@ async function addTransportOption(contract, mode, source, destination, departure
     const timestamp = new Date().getTime();
     const randomString = crypto.randomBytes(3).toString('hex');
     transportId = `TRANS_${timestamp}_${randomString}`;
+    // transportId = 1001
 
     console.log('\n--> Submit Transaction: addTransportOption');
 
@@ -343,6 +344,7 @@ async function queryProviderTransportOptions(contract, source, destination) {
         console.log('*** No transport options available for the given source and destination.');
     } else {
         console.log('*** Provider Transport Options:', result);
+        return result;
     }
 }
 

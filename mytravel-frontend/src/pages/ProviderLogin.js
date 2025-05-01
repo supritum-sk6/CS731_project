@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const ProviderLogin = () => {
   const [form, setForm] = useState({
@@ -8,15 +8,20 @@ const ProviderLogin = () => {
     contactPhone: '',
   });
 
+  const navigate = useNavigate();
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async () => {
     try {
-      const res = await axios.post('/provider/login', form);
+      const res = await axios.post(
+        `${process.env.REACT_APP_BACKEND}/provider/login`,
+        form
+      );
       alert(`Login successful: ${JSON.stringify(res.data)}`);
-      // redirect to provider dashboard here if needed
+      navigate('/provider/home');
     } catch (err) {
       alert(`Login failed: ${err.response?.data || err.message}`);
     }
@@ -43,7 +48,10 @@ const ProviderLogin = () => {
         Login
       </button>
       <p style={styles.toggle}>
-        Don't have an account? <Link to="/provider/register" style={{ color: '#bbb' }}>Register here</Link>
+        Don't have an account?{' '}
+        <Link to="/provider/register" style={{ color: '#bbb' }}>
+          Register here
+        </Link>
       </p>
     </div>
   );

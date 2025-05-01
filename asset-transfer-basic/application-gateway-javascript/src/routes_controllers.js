@@ -16,7 +16,8 @@ const {
     queryProviderTransportOptions_route
 } = require('./app');
 
-app.use(cors());
+// app.use(cors());
+app.use(cors({ origin: 'http://localhost:3001', credentials: true }));
 app.use(bodyParser.json());
 
 app.post('/initLedger', async (req, res) => {
@@ -57,7 +58,7 @@ app.delete('/provider/delete', async (req, res) => {
     }
 });
 
-app.post('/transport/mode/add', async (req, res) => {
+app.post('/provider/transport/mode/add', async (req, res) => {
     const { mode } = req.body;
     try {
         const result = await addModeOfTransport_route(mode);
@@ -67,7 +68,7 @@ app.post('/transport/mode/add', async (req, res) => {
     }
 });
 
-app.delete('/transport/mode/remove', async (req, res) => {
+app.post('/provider/transport/mode/remove', async (req, res) => {
     const { mode } = req.body;
     try {
         const result = await removeModeOfTransport_route(mode);
@@ -77,7 +78,7 @@ app.delete('/transport/mode/remove', async (req, res) => {
     }
 });
 
-app.post('/transport/option/add', async (req, res) => {
+app.post('/provider/transport/option/add', async (req, res) => {
     const { mode, source, destination, departure, arrival, price, seats } = req.body;
     try {
         const result = await addTransportOption_route(mode, source, destination, departure, arrival, price, seats);
@@ -87,7 +88,7 @@ app.post('/transport/option/add', async (req, res) => {
     }
 });
 
-app.delete('/transport/option/remove', async (req, res) => {
+app.post('/provider/transport/option/remove', async (req, res) => {
     const { transportId } = req.body;
     try {
         const result = await removeTransportOption_route(transportId);
@@ -97,11 +98,12 @@ app.delete('/transport/option/remove', async (req, res) => {
     }
 });
 
-app.get('/transport/query', async (req, res) => {
-    const { source, destination } = req.query;
+app.post('/provider/transport/query', async (req, res) => {
+    const { source, destination } = req.body;
     try {
         const result = await queryProviderTransportOptions_route(source, destination);
         res.json({ success: true, result });
+        return result;
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }

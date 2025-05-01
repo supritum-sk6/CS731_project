@@ -14,7 +14,10 @@ const ProviderRegister = () => {
 
   const handleSubmit = async () => {
     try {
-      const res = await axios.post('/provider/register', form);
+      const res = await axios.post(
+        `${process.env.REACT_APP_BACKEND}/provider/register`,
+        form
+      );
       alert(`Registered successfully: ${JSON.stringify(res.data)}`);
     } catch (err) {
       alert(`Error: ${err.response?.data || err.message}`);
