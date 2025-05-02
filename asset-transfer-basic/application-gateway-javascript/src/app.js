@@ -156,9 +156,39 @@ async function initLedger_route() {
     return await initLedger(contract);
 }
 
-async function registerProvider_route(companyName, contactEmail, contactPhone) {
-    return await registerProvider(contract, companyName, contactEmail, contactPhone);
+async function registerProvider_route(companyName, contactEmail, contactPhone, password) {
+    hashed_password = hashPassword(password);
+    return await registerProvider(contract, companyName, contactEmail, contactPhone, hashed_password);
 }
+function hashPassword(password) {
+    const salt = crypto.randomBytes(16).toString('hex'); // 16 bytes = 128 bits
+    const hash = crypto.createHash('sha256').update(salt + password).digest('hex');
+    return `${salt}:${hash}`;
+}
+
+
+
+async function loginProvider_route(contactEmail, password) {
+    const storedHashedPassword = await loginProvider(contract, contactEmail, password);
+    
+    const match = matchPassword(password, storedHashedPassword);
+    if (!match) {
+        return res.status(401).json({ success: false, error: 'Invalid password' });
+    }
+    // res.json({ success: true, message: 'Login successful', providerId });
+    const providerId = crypto.createHash('sha256')
+        .update(contactEmail.toLowerCase().trim())
+        .digest('hex');
+
+    return { success: true, message: 'Login successful', providerId };
+}
+function matchPassword(inputPassword, storedHash) {
+    const [salt, originalHash] = storedHash.split(':');
+    const hash = crypto.createHash('sha256').update(salt + inputPassword).digest('hex');
+    return hash === originalHash;
+}
+
+
 
 async function updateProvider_route(companyName, contactEmail, contactPhone) {
     return await updateProvider(contract, companyName, contactEmail, contactPhone);
@@ -197,11 +227,11 @@ async function initLedger(contract) {
 
 
 
-async function registerProvider(contract, companyName, contactEmail, contactPhone) {
+async function registerProvider(contract, companyName, contactEmail, contactPhone, hashed_password) {
     console.log('\n--> Submit Transaction: registerProvider');
 
     const commit = await contract.submitAsync('registerProvider', {
-        arguments: [companyName, contactEmail, contactPhone],
+        arguments: [companyName, contactEmail, contactPhone, hashed_password],
     });
 
     const resultJson = utf8Decoder.decode(commit.getResult());
@@ -213,6 +243,27 @@ async function registerProvider(contract, companyName, contactEmail, contactPhon
     }
     console.log('*** Transaction committed successfully');
 }
+
+
+async function loginProvider(contract, contactEmail, password){
+    console.log('\n--> Evaluate Transaction: loginProvider');
+
+    const resultBytes = await contract.evaluateTransaction('loginProvider', contactEmail);
+    const hashedPassword = utf8Decoder.decode(resultBytes);
+
+    console.log('*** Retrieved hashed password from chaincode');
+    return hashedPassword;
+}
+// async function loginProvider(contract, contactEmail, password) {
+//     const resultBytes = await contract.evaluateTransaction('loginProvider', contactEmail, password);
+
+//     const hashedPassword = utf8Decoder.decode(resultBytes);
+
+//     // Ensure result is a string (strip quotes if needed)
+//     const clean = hashedPassword.replace(/^"(.*)"$/, '$1');
+
+//     return clean;
+// }
 
 
 
@@ -413,6 +464,7 @@ function displayInputParameters() {
 module.exports = {
     initLedger_route,
     registerProvider_route,
+    loginProvider_route,
     updateProvider_route,
     deleteProvider_route,
     addModeOfTransport_route,

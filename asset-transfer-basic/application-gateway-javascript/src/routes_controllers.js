@@ -3,10 +3,14 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const crypto = require('node:crypto');
+
+const { registerProviderIdentity } = require('../scripts/registerProviderIdentity');
 
 const {
     initLedger_route,
     registerProvider_route,
+    loginProvider_route,
     updateProvider_route,
     deleteProvider_route,
     addModeOfTransport_route,
@@ -30,13 +34,27 @@ app.post('/initLedger', async (req, res) => {
 });
 
 app.post('/provider/register', async (req, res) => {
-    const { companyName, contactEmail, contactPhone } = req.body;
+    const { companyName, contactEmail, contactPhone, password } = req.body;
+
+    const fabricResult = await registerProviderIdentity({ email: contactEmail, password });
+
     try {
-        const result = await registerProvider_route(companyName, contactEmail, contactPhone);
+        const result = await registerProvider_route(companyName, contactEmail, contactPhone, password);
         res.json({ success: true, result });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
+});
+
+app.post('/provider/login', async (req, res) => {
+    const { contactEmail, password } = req.body;
+    try {
+        const result = await loginProvider_route(contactEmail, password);
+        res.json({ success: true, result });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+
 });
 
 app.post('/provider/update', async (req, res) => {

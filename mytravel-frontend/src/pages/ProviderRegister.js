@@ -6,21 +6,48 @@ const ProviderRegister = () => {
     companyName: '',
     contactEmail: '',
     contactPhone: '',
+    password: ''
   });
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async () => {
+//   const handleSubmit = async () => {
+//     try {
+//       const res = await axios.post(
+//         `${process.env.REACT_APP_BACKEND}/provider/register`,
+//         form
+//       );
+//       alert(`Registered successfully: ${JSON.stringify(res.data)}`);
+//     } catch (err) {
+//       alert(`Error: ${err.response?.data || err.message}`);
+//     }
+//   };
+
+const handleSubmit = async () => {
     try {
-      const res = await axios.post(
-        `${process.env.REACT_APP_BACKEND}/provider/register`,
-        form
-      );
-      alert(`Registered successfully: ${JSON.stringify(res.data)}`);
-    } catch (err) {
-      alert(`Error: ${err.response?.data || err.message}`);
+        const res = await axios.post(
+            `${process.env.REACT_APP_BACKEND}/provider/register`,
+            form
+        );
+        alert(`Registered successfully: ${JSON.stringify(res.data, null, 2)}`);
+    } 
+    catch (err) {
+      let errorMessage = 'Unknown error occurred';
+      
+        if (err.response?.data) {
+        // If the server sends a specific error message
+        if (typeof err.response.data === 'string') {
+            errorMessage = err.response.data;
+        } else if (typeof err.response.data === 'object') {
+            errorMessage = JSON.stringify(err.response.data, null, 2);
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+  
+      alert(`Error:\n${errorMessage}`);
     }
   };
 
@@ -45,6 +72,13 @@ const ProviderRegister = () => {
         type="text"
         name="contactPhone"
         placeholder="Phone Number"
+        onChange={handleChange}
+        style={styles.input}
+      />
+       <input
+        type="password"
+        name="password"
+        placeholder="Enter Password"
         onChange={handleChange}
         style={styles.input}
       />

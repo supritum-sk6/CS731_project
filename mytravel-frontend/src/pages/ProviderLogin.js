@@ -5,7 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 const ProviderLogin = () => {
   const [form, setForm] = useState({
     contactEmail: '',
-    contactPhone: '',
+    password: '',
   });
 
   const navigate = useNavigate();
@@ -14,7 +14,20 @@ const ProviderLogin = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async () => {
+//   const handleSubmit = async () => {
+//     try {
+//       const res = await axios.post(
+//         `${process.env.REACT_APP_BACKEND}/provider/login`,
+//         form
+//       );
+//       alert(`Login successful: ${JSON.stringify(res.data)}`);
+//       navigate('/provider/home');
+//     } catch (err) {
+//       alert(`Login failed: ${err.response?.data || err.message}`);
+//     }
+//   };
+
+const handleSubmit = async () => {
     try {
       const res = await axios.post(
         `${process.env.REACT_APP_BACKEND}/provider/login`,
@@ -23,9 +36,12 @@ const ProviderLogin = () => {
       alert(`Login successful: ${JSON.stringify(res.data)}`);
       navigate('/provider/home');
     } catch (err) {
-      alert(`Login failed: ${err.response?.data || err.message}`);
+      const errorMsg =
+        err.response?.data?.error || err.response?.data || err.message;
+      alert(`Login failed: ${errorMsg}`);
     }
   };
+  
 
   return (
     <div style={styles.container}>
@@ -38,9 +54,9 @@ const ProviderLogin = () => {
         style={styles.input}
       />
       <input
-        type="text"
-        name="contactPhone"
-        placeholder="Phone Number"
+        type="password"
+        name="password"
+        placeholder="Enter password"
         onChange={handleChange}
         style={styles.input}
       />

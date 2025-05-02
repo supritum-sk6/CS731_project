@@ -16,12 +16,13 @@ class User {
 }
 
 class ServiceProvider {
-    constructor(provider_id, company_name, contact_email, contact_phone, modes_of_transport) {
+    constructor(provider_id, company_name, contact_email, contact_phone, modes_of_transport, hashed_password) {
         this.provider_id = provider_id;
         this.company_name = company_name;
         this.contact_email = contact_email;
         this.contact_phone = contact_phone;
         this.modes_of_transport = modes_of_transport;
+        this.hashed_password = hashed_password
         this.docType = 'provider';
     }
 }
@@ -79,18 +80,33 @@ class TicketBookingContract extends Contract {
         }
     }
 
-    _getInvokerId(ctx) {
-        return ctx.clientIdentity.getID();
+    _getInvokerId(ctx, contactEmail) {
+        // return ctx.clientIdentity.getID();
+        const normEmail = contactEmail.toLowerCase().trim();
+        const providerId = crypto.createHash('sha256').update(normEmail).digest('hex');
+        return providerId
     }
 
     // Functions for ServiceProvider (Org1)
-    async registerProvider(ctx, companyName, contactEmail, contactPhone) {
+    async registerProvider(ctx, companyName, contactEmail, contactPhone, hashed_password) {
         this._checkOrg(ctx, 'Org1MSP');
-        const providerId = this._getInvokerId(ctx);
-        const provider = new ServiceProvider(providerId, companyName, contactEmail, contactPhone, []);
+        const providerId = this._getInvokerId(ctx, contactEmail);
+        const provider = new ServiceProvider(providerId, companyName, contactEmail, contactPhone, [], hashed_password);
         const providerKey = `PROVIDER_${providerId}`;
         await ctx.stub.putState(providerKey, Buffer.from(JSON.stringify(provider)));
         return JSON.stringify(provider);
+    }
+
+    async loginProvider(ctx, contactEmail) {
+        this._checkOrg(ctx, 'Org1MSP');
+        const providerId = crypto.createHash('sha256').update(contactEmail.toLowerCase().trim()).digest('hex');
+        const providerKey = `PROVIDER_${providerId}`;
+        const data = await ctx.stub.getState(providerKey);
+        if (!data || data.length === 0) {
+            throw new Error(`Provider not found for key: ${providerKey}`);
+        }
+        const provider = JSON.parse(data.toString());
+        return provider.hashed_password;
     }
 
     async updateProvider(ctx, companyName, contactEmail, contactPhone) {
